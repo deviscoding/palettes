@@ -1,0 +1,211 @@
+/*!
+ * deviscoding Palettes v1.0 (http://github.com/deviscoding/palettes)
+ * Licensed under MIT (https://github.com/deviscoding/palettes/blob/master/LICENSE)
+ */
+.-textGray {
+  color: #212121 !important;
+}
+
+.-textBlueGray {
+  color: #263238 !important;
+}
+
+.-textRed {
+  color: #b71c1c !important;
+}
+
+.-textPink {
+  color: #880e4f !important;
+}
+
+.-textPurple {
+  color: #4a148c !important;
+}
+
+.-textDeepPurple {
+  color: #311b92 !important;
+}
+
+.-textIndigo {
+  color: #1a237e !important;
+}
+
+.-textBlue {
+  color: #0f6092 !important;
+}
+
+.-textLightBlue {
+  color: #01579b !important;
+}
+
+.-textCyan {
+  color: #006064 !important;
+}
+
+.-textTeal {
+  color: #004d40 !important;
+}
+
+.-textGreen {
+  color: #1b5e20 !important;
+}
+
+.-textLightGreen {
+  color: #33691e !important;
+}
+
+.-textLime {
+  color: #827717 !important;
+}
+
+.-textYellow {
+  color: #f57f17 !important;
+}
+
+.-textAmber {
+  color: #ff6f00 !important;
+}
+
+.-textOrange {
+  color: #e65100 !important;
+}
+
+.-textDeepOrange {
+  color: #bf360c !important;
+}
+
+.-textBrown {
+  color: #3e2723 !important;
+}
+
+.-textPrimary {
+  color: #0f6092 !important;
+}
+
+.-textSecondary {
+  color: #01579b !important;
+}
+
+.-textInfo {
+  color: #01579b !important;
+}
+
+.-textSuccess {
+  color: #1b5e20 !important;
+}
+
+.-textWarning {
+  color: #f57f17 !important;
+}
+
+.-textDanger {
+  color: #b71c1c !important;
+}
+
+.-textDefault {
+  color: #212121 !important;
+}
+
+.-bgGray {
+  background-color: #bdbdbd !important;
+}
+
+.-bgBlueGray {
+  background-color: #cfd8dc !important;
+}
+
+.-bgRed {
+  background-color: #ffebee !important;
+}
+
+.-bgPink {
+  background-color: #fce4ec !important;
+}
+
+.-bgPurple {
+  background-color: #f3e5f5 !important;
+}
+
+.-bgDeepPurple {
+  background-color: #ede7f6 !important;
+}
+
+.-bgIndigo {
+  background-color: #e8eaf6 !important;
+}
+
+.-bgBlue {
+  background-color: #e2f6fc !important;
+}
+
+.-bgLightBlue {
+  background-color: #e1f5fe !important;
+}
+
+.-bgCyan {
+  background-color: #b2ebf2 !important;
+}
+
+.-bgTeal {
+  background-color: #b2dfdb !important;
+}
+
+.-bgGreen {
+  background-color: #c8e6c9 !important;
+}
+
+.-bgLightGreen {
+  background-color: #dcedc8 !important;
+}
+
+.-bgLime {
+  background-color: #f9fbe7 !important;
+}
+
+.-bgYellow {
+  background-color: #000 !important;
+}
+
+.-bgAmber {
+  background-color: #fff !important;
+}
+
+.-bgOrange {
+  background-color: #fff !important;
+}
+
+.-bgDeepOrange {
+  background-color: #fbe9e7 !important;
+}
+
+.-bgBrown {
+  background-color: #d7ccc8 !important;
+}
+
+.-bgPrimary {
+  background-color: #e2f6fc !important;
+}
+
+.-bgSecondary {
+  background-color: #e1f5fe !important;
+}
+
+.-bgInfo {
+  background-color: #e1f5fe !important;
+}
+
+.-bgSuccess {
+  background-color: #c8e6c9 !important;
+}
+
+.-bgWarning {
+  background-color: #000 !important;
+}
+
+.-bgDanger {
+  background-color: #ffebee !important;
+}
+
+.-bgDefault {
+  background-color: #bdbdbd !important;
+}

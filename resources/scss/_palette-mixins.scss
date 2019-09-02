@@ -1,0 +1,127 @@
+@import "palette-functions";
+
+@mixin palette-hover-focus {
+  @if $bootstrap-compatible and mixin-exists(hover-focus) {
+    @include hover-focus {
+      @content;
+    }
+  }
+}
+
+// Generates the background utility classes for the given name and color value.
+//
+// @param {String} The name to use in the class.
+// @param {Color}  The color value to assign to the background.
+@mixin bg-palette-variant($name, $color-value) {
+
+  $dc-class: ".-bg#{to-pascal-case($name)}";
+  $bs-class: ".bg-#{$name}";
+
+  @if $bootstrap-compatible and mixin-exists(bg-variant) {
+    // Use the Bootstrap Mixin if Possible
+    @include bg-variant($dc-class,$color-value);
+    #{$bs-class} { @extend #{$dc-class}; }
+  } @else {
+    // Otherwise we use our own output
+    #{$dc-class} {
+      background-color: $color-value !important;
+    }
+    a#{$dc-class} {
+      @include palette-hover-focus {
+        background-color: darken($color-value, 10%) !important;
+      }
+    }
+
+    // And extend for bootstrap if needed
+    @if $bootstrap-compatible {
+      #{$bs-class} { @extend #{$dc-class}; }
+    }
+  }
+}
+
+// Generates the text color utility classes for the given name and color value.
+//
+// @param {String} The name to use in the class.
+// @param {Color}  The color value to assign to the text.
+@mixin text-emphasis-palette-variant($name, $color-value) {
+
+  $dc-class: ".-text#{to-pascal-case($name)}";
+  $bs-class: ".text-#{$name}";
+
+  @if $bootstrap-compatible and mixin-exists(text-emphasis-variant) {
+    // Use the Bootstrap Mixin if Possible
+    @include text-emphasis-variant($dc-class,$color-value);
+    #{$bs-class} { @extend #{$dc-class}; }
+  } @else {
+    // Otherwise we use our own output
+    #{$dc-class} {
+      color: $color-value !important;
+    }
+    a#{$dc-class} {
+      @include palette-hover-focus {
+        color: darken($color-value, 10%) !important;
+      }
+    }
+
+    // And extend for bootstrap if needed
+    @if $bootstrap-compatible {
+      #{$bs-class} { @extend #{$dc-class}; }
+    }
+  }
+}
+
+// Generates background color utility classes for all of the palettes by name in the given export list.
+//
+// @param {Map|List}  $export The list of palettes to export backgrounds for.
+@mixin background-color-utils($export: $palette-export) {
+  @each $name in $export {
+    $key:   get-palette-key($name);
+    $bg:    get-background($key,$default-color-weight);
+
+    @include bg-palette-variant($name, $bg);
+  }
+}
+
+// Generates text color utility classes for all of the palettes by name in the given export list.
+//
+// @param {Map|List}  $export The list of palettes to export text colors for.
+@mixin text-color-utils($export: $palette-export) {
+  @each $name in $export {
+    $key:   get-palette-key($name);
+    $text:  get-color($key, $default-color-weight);
+
+    @include text-emphasis-palette-variant($name, $text);
+  }
+}
+
+// Generates component color utility classes for all of the palettes by name in the given export list.
+//
+// @param {Map|List}  $export The list of palettes to export backgrounds for.
+@mixin component-color-utils($export: $palette-export) {
+  @each $name in $export {
+    $key: get-palette-key($name);
+
+    $text:   get-color($key, $default-color-weight);
+    $bg:     get-background($key,$default-color-weight);
+    $border: get-color($key, $default-color-weight);
+    $cardBg: if(variable-exists(card-bg), $card-bg, #fff);
+
+    .-#{$name} {
+      background-color: $bg;
+      color: $text;
+      border-color: $border;
+      &.-outline, &.-panel {
+        background-color: $cardBg;
+        border-color: $bg;
+      }
+    }
+
+    a.-#{$name}:hover {
+      background-color: darken($bg, 10%) !important;
+      color: darken($text, 10%) !important;
+      &.-outline, &.-panel {
+        background-color: darken($cardBg, 10%);
+      }
+    }
+  }
+}

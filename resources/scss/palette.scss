@@ -1,0 +1,16 @@
+@import "palette-variables";
+@import "palette-functions";
+@import "palette-mixins";
+@import "bs4_compatibility";
+
+@if not($enable-framework) {
+/*!
+ * deviscoding Palettes v1.0 (http://github.com/deviscoding/palettes)
+ * Licensed under MIT (https://github.com/deviscoding/palettes/blob/master/LICENSE)
+ */
+@include text-color-utils();
+@include background-color-utils();
+@if $enable-components {
+  @include component-color-utils();
+}
+}

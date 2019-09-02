@@ -1,0 +1,736 @@
+@import "palette-variables";
+
+// region //////////////////////////////////////////////// Private Sorting Functions
+
+// Returns the weight given as a numeric value.  Used in sorting of weights.
+//
+// @param     {String|Number}   The weight value to normalize.
+//
+// @internal
+//
+// @return    {Number}          The normalized weight.
+@function _get-weight-as-number($weight) {
+
+  $numbers: ('50': 50, '100': 100, '200': 200, '300': 300, '400': 400, '500': 500, '600': 600, '700': 700, '800': 800, '900': 900, '1000': 1000 );
+  $isAlt: false;
+
+  @if not(type-of($weight) == "number") {
+
+    $aa: to-lower-case(unquote(quote($weight)));
+
+    @if str-slice($aa,0,1) == a {
+      $isAlt: true;
+      $aa: str-slice($aa, 2);
+    }
+
+    @if not(map-has-key($numbers,$aa)) {
+      @error "Invalid Weight `#{$weight}` given."
+    }
+
+    $aaa: map-get($numbers,$aa);
+
+    @if $isAlt {
+      $aaa: $aaa + 9000;
+    }
+
+    @return $aaa;
+  }
+
+  @return $weight;
+}
+
+// Removes the value for the given index from the given list.
+// Intended for internal use; works only with space separated lists.
+//
+// @param     {List}   $list   The list to remove the index from.
+// @param     {Number} $index The index to remove.
+//
+// @internal
+//
+// @return    {List}
+@function _list-remove($list, $index) {
+  $newList: ();
+  @for $i from 1 through length($list) {
+    @if $i != $index {
+      $newList: append($newList, nth($list,$i), 'space');
+    }
+  }
+  @return $newList;
+}
+
+// Sorting function that compares two given weights.  Weights may be strings or integers.
+//
+// @param     {String|Number} $a  The first weight
+// @param     {String|Number} $b  The second weight
+//
+// @internal
+//
+// @return    {Bool}
+@function _weight-compare($a, $b) {
+  $aa: _get-weight-as-number($a);
+  $bb: _get-weight-as-number($b);
+
+  @return ($aa < $bb);
+}
+
+// Sorts a map of weight: color_value by the weights.
+//
+// @param     {Map}    The map to sort (weight: color_value)
+//
+// @internal
+//
+// @return    {Map}    A new sass map, sorted by weight key.
+@function _weight-sort($map) {
+  $weights: map-keys($map);
+  $sorted: ();
+
+  @while length($weights) > 0 {
+    $value: nth($weights,1);
+    @each $weight in $weights {
+      @if _weight-compare($value,$weight) {
+        $value: $weight;
+      }
+    }
+    $sorted: append($sorted, $value, 'comma');
+    $weights: _list-remove($weights, index($weights, $value));
+  }
+
+  $sorted-map: ();
+  $weights: map-keys($map);
+  @each $weight in $weights {
+    $sorted-map: map-merge($sorted-map, ($weight: map-get($map, $weight)));
+  }
+
+  @return $sorted-map;
+}
+
+// endregion ///////////////////////////////////////////// End Private Sorting Functions
+
+// region //////////////////////////////////////////////// Private Helper Functions
+
+// Normalizes the given weight value, changing to lower case, removing quotes.
+//
+// @param {String|Number} $weight The weight to parse.
+//
+// @internal
+//
+// @return    {String}
+@function _parse-weight($weight) {
+  @if not(type-of($weight) == "string") {
+    $weight: inspect($weight);
+  }
+
+  @return quote(to-lower-case($weight));
+}
+
+// Retrieves the given palette by KEY from the $palettes variable.
+//
+// @param     {String} $palette The palette key to retrieve the palette for.
+//
+// @internal
+//
+// @return    {Map}             A map of weight: color_value
+@function _get-palette($palette) {
+  $tKey: quote($palette);
+
+  // Check to make sure that we have the color.
+  @if not( map-has-key( $palettes,$tKey ) ) {
+    @warn $palette;
+    @error "A palette for `#{$palette}` is not available in the variable `$palettes`.";
+  }
+
+  @return map-get($palettes, $tKey);
+}
+
+// Retrieves the color by palette name and color weight.  The weight may be omitted if the palettes
+// are configured without weights.  If the resulting value is not a valid color value or the palette
+// or weight does not exist, an error is generated.
+//
+// @param     {String}        $palette-name  The palette name to retrieve the color from.
+// @param     {String|Number} $weight        The weight of the color to retrieve.
+//
+// @internal
+//
+// @return    {Color}
+@function _get-color-if($palette-name, $weight) {
+
+  // Get and Verify Palette
+  $tPalette: _get-palette($palette-name);
+  $tColor:   null;
+
+  @if type_of($tPalette) == "map" {
+
+    // Add Quotes to match the map
+    $tWeight: _parse-weight($weight);
+
+    // Check to make sure that we have the weight.
+    @if not(map-has-key($tPalette,$tWeight)) {
+      @error "The weight `#{$weight}` is not available in the `#{$palette-name}` key of the palette map.";
+    }
+
+    $tColor: map-get($tPalette,$tWeight);
+  } @else {
+    $tColor: $tPalette;
+  }
+
+  // Get and Verify Color
+  @if not(type-of($tColor) == "color") {
+    @if type-of($tPalette) == "map" {
+      @error "Invalid value for the weight `#{$weight}` located in the `#{$palette-name}` key of the `$palettes` variable.";
+    } @else {
+      @error "Invalid value for the `#{$palette-name}` key in the `$palettes` variable.";
+    }
+  }
+
+  @return $tColor;
+}
+
+// Sets the given palette as a palette of the given key name in the given map variable.
+//
+// @param     {Map}    $map     The map to in which to add the palette map
+// @param     {String} $key     The key to use for the palette.
+// @param     {Map}    $palette The map of weight: color_value
+// @internal
+// @return    {Map}             The map with the new palette map merged in
+@function _set-palette($map, $key, $palette) {
+
+  // Force Quotes to Match Map
+  $tKey: quote($key);
+
+  // Verify that data is correct
+  @if not(type-of($palette) == "map") {
+    @if not(type-of($palette) == "color") {
+      @return false;
+    }
+  }
+
+  @if map-has-key($map,$tKey) {
+    $map: map-remove($map,$tKey);
+  }
+
+  @return map-merge($map, ($tKey: $palette));
+}
+
+/// Transforms a string into PascalCase
+///
+/// @credit Eduardo Boucas (@eduardoboucas)
+///
+/// @param  {String} $input The string to transform
+///
+/// @return {String}        The transformed string
+///
+@function to-pascal-case($input) {
+  $str:     '';
+  $capital: true;
+  $hyphen:  false;
+
+  @for $i from 1 through str-length($input) {
+    $char: str-slice($input, $i, $i);
+
+    @if $char != '-' {
+      $str: $str + if($capital, to-upper-case($char), $char);
+
+      $capital: false;
+      $hyphen: false;
+    } @else {
+      // Allowing double hyphen for BEM syntax
+      @if $hyphen {
+        $str: $str + '--';
+        $hyphen: false;
+      } @else {
+        $hyphen: true;
+      }
+
+      $capital: true;
+    }
+  }
+
+  @return $str;
+}
+
+// Calculates the contrast of two color values.
+//
+// @param  {Color} $foreground  The foreground color
+// @param  {Color} $background  The background color
+//
+// @source https://medium.com/@jonnykates/automating-colour-contrast-ratios-with-sass-e201f3b52797
+//
+// @return {Number}
+@function get-contrast($foreground, $background) {
+  $r: (max(red($foreground), red($background))) - (min(red($foreground), red($background)));
+  $g: (max(green($foreground), green($background))) - (min(green($foreground), green($background)));
+  $b: (max(blue($foreground), blue($background))) - (min(blue($foreground), blue($background)));
+  $sum-rgb: $r + $g + $b;
+
+  @return $sum-rgb;
+}
+
+// Merges the existing and new map values.  Intended for merging maps into the palettes variable.
+//
+// @param     {Map} $existing The existing map.
+// @param     {Map} $new      The map values to merge into the existing map.
+//
+// @internal
+// @return    {Map}
+@function _merge-palettes($existing,$new: ()) {
+  @if not(type-of($new) == map) {
+    @error "You cannot merge non-map data into the `$palettes` variable."
+  }
+
+  @return map-merge($existing,$new);
+}
+
+// Merges the existing and new map values, then sorts by key.  Intended for merging of new values
+// into a color map of weight: color_value.
+//
+// @param     {Map} $existing The existing map.
+// @param     {Map} $new      The map values to merge into the existing map.
+//
+// @internal
+// @return    {Map}
+@function _merge-palette-map($existing,$new: ()) {
+  @return _weight-sort(map-merge($existing, $new));
+}
+
+// endregion ///////////////////////////////////////////// End Private Helper Functions
+
+// region //////////////////////////////////////////////// Main Getter/Setter Functions
+
+// Returns the default weight for the given palette name.
+//
+// @param  {String} $name
+//
+// @return {String}
+@function get-default-weight($name) {
+  $t-name: quote($name);
+  @if map-has_key($palette-weight-defaults,$t-name) {
+    @return map-get($palette-weight-defaults, $t-name)
+  }
+
+  @return $default-color-weight;
+}
+
+// Returns the color based on the given palette name and weight.  If no weight or zero weight is given,
+// the default weight for the palette will be used.
+//
+// @param  {String} $name     The palette by NAME
+// @param  {Number} $weight   The color weight
+// @return {Color}
+@function get-color($name, $weight: 0) {
+  $t-weight:  if($weight == 0, get-default-weight($name), $weight);
+  $p-name:    quote($name);
+  $p-key:     map-get($palette-keys, $p-name);
+
+  @return _get-color-if($p-key, $t-weight);
+}
+
+// Generates a background color that is appropriate for the given palette name and weight used as a
+// a foreground color. Note that this may produce less aesthetically pleasing results, however it
+// will help to ensure accessibility. This function's results should be used as a guideline for
+// manually choosing a background color.
+//
+// @param  {String} $palette-name The palette name to generate a background color from.
+// @param  {Number} $weight       The color weight from the palette to use for the foreground color.
+//
+// @return {Color}
+@function generate-background($palette-name, $weight) {
+  $color:   get-color($palette-name, $weight);
+  $palette: _get-palette($palette-name);
+
+  $t-contrast: 0;
+  $p-color: #fff;
+  @each $p-weight,$p-color in $palette {
+    @if(_get_weight_as_number($p-weight) < 9000) {
+      $t-contrast: get-contrast($color,$p-color);
+      @if($t-contrast >=  $minimum-color-contrast) {
+        @return $p-color;
+      }
+    }
+  }
+
+  $w-contrast: get-contrast($color,#fff);
+  @if($w-contrast >= $minimum-color-contrast) {
+    @return #fff;
+  }
+
+  $b-contrast: get-contrast($color,#000);
+  @if($b-contrast >= $minimum-color-contrast) {
+    @return #000;
+  }
+
+  @warn "No configured color contrasts `#{$palette-name}:#{$weight}` by more than `#{$minimum-color-contrast}`";
+  $max: max($t-contrast,$w-contrast,$b-contrast);
+  @if $max == $t-contrast { @return $p-color; }
+  @if $max == $w-contrast { @return #fff; }
+  @if $max == $b-contrast { @return #000; }
+}
+
+// Retrieves the key for the given palette name.
+//
+// @param  {String} $name
+//
+// @return {String}
+@function get-palette-key($name) {
+
+  $tName: quote($name);
+
+  // Check to make sure that we have that key.
+  @if not( map-has-key( $palette-keys, $tName ) ) {
+    @warn "A value has not been specified for `#{$name}` in the variable `$palette-keys`.";
+
+    @return $name;
+  }
+
+  @return map-get($palette-keys,$tName);
+}
+
+// Gets the background for the given palette name and weight (as a foreground color).  If a background
+// is not found in the map, one will be generated with the generate-background function then saved in
+// the map.
+//
+// @param  {String} $palette-name   The palette by name to retrieve the background color from.
+// @param  {Number} $weight         The weight of foreground color to retrieve a background color for.
+//
+// @return {Color}
+@function get-background($palette-name, $weight) {
+
+  $color:   get-color($palette-name, $weight);
+  $p-key:   get-palette-key($palette-name);
+
+  @if not(map-has-key($_palette-backgrounds,quote($color))) {
+    $_palette-backgrounds: map-merge($_palette-backgrounds,(quote($color): generate-background($p-key, $weight))) !global;
+  }
+
+  @return map-get($_palette-backgrounds, quote($color));
+}
+
+// Sets the key for the given palette name.
+//
+// NOTE: This is a mixin, and must be used with @include.  It modifies the global $palettes variable.
+@mixin set-palette-key($name, $key) {
+  $t-name: quote($name);
+  $t-key: quote($key);
+  $palette-keys: map-merge($palette-keys, ($t-name: $t-key)) !global;
+}
+
+// Registers the given name as a palette, using the given map as the initial values.
+//
+// NOTE: This is a mixin, and must be used with @include.  It modifies the global $palettes variable.
+//
+// @param {String} The key to use for the new palette; also used as the palette name.
+// @param {Map}    The initial values for the new palette, as weight: color_value.
+@mixin register-palette($palette-key, $initial: () ) {
+  $tKey: quote($palette-key);
+
+  @if (map-has-key($palettes, $tKey)) {
+    @warn $palette-key;
+    @error "A palette for `#{$palette-key}` already exists in the variable `$palettes`";
+  }
+
+  @include set-palette-key($tKey,$tKey);
+
+  $palettes: _merge-palettes($palettes,($tKey: $initial)) !global;
+}
+
+// Merges the given map into the values of the given palette by name.
+//
+// NOTE: This is a mixin, and must be used with @include.  It modifies the global $palettes variable.
+//
+// @param {String}  $name   The name of the palette to merge into.
+// @param {Map}     $map    Values to merge into the map for this palette.
+@mixin merge-palette($name,$new-map) {
+  $p-name:    quote($name);
+  $p-key:     map-get($palette-keys, $p-name);
+  $palette:   _merge-palettes(_get-palette($p-key), $new-map);
+
+  $palettes:  map_merge($palettes, ($p-key: $palette)) !global;
+}
+
+// Sets the color value for the given palette name and weight.
+//
+// NOTE: This is a mixin, and must be used with @include.  It modifies the global $palettes variable.
+//
+// @param {String} $palette-name    The name of the palette to update.
+// @param {Color}  $color           The color value to set.
+// @param {Number} $weight          The weight to set the color value as.
+@mixin set-color-weight($palette-name, $color, $weight) {
+
+  // Verify Key Exists
+  $tKey: quote($palette-name);
+  @if not(map-has-key($palettes,$tKey)) {
+    @error "The palette for `#{$palette-name}` is not available in the variable `$palettes`.";
+  }
+
+  // Verify Data
+  @if not(type-of($color) == "color") {
+    @error "The data `#{$color}` is not a color and cannot be added to the `#{$palette-name}` key of the `$palettes` variable.";
+  }
+
+  // Verify we're not mixing types
+  $tPalette: map-get($palettes, $tKey);
+  @if $weight == null and not(type-of($tPalette) == "color") {
+    @error "Cannot mix palette maps and single colors in `#{$palette-name}` key of `$palettes` variable.";
+  }
+
+  // Add into the map or set the color
+  @if $weight == null {
+    $tPalette: $color;
+  } @else {
+    $tWeight: _parse-weight($weight);
+    $tPalette: _merge-palette-map($tPalette, ($tWeight: $color));
+  }
+
+  // Merge back into the global map
+  $palettes: _merge-palettes($palettes, ($tKey: $tPalette)) !global;
+}
+
+// Sets the default weight for the given palette by name.
+//
+// NOTE: This is a mixin, and must be used with @include.  It modifies the global $palettes variable.
+//
+// @param {String} $name    The name of the palette for which to set the default weight.
+// @param {Number} $weight  The weight to set as the default weight.
+@mixin set-default-weight($name, $weight) {
+  $palette-weight-defaults: map-merge($palette-weight-defaults, ($name: $weight)) !global;
+}
+
+// endregion ///////////////////////////////////////////// End Getter/Setter Functions
+
+// region //////////////////////////////////////////////// Convenience Setter
+
+@mixin merge-gray($new-map) {
+  @include merge-palette("gray",$new-map);
+}
+
+@mixin merge-blue-gray($new-map) {
+  @include merge-palette("blue-gray",$new-map);
+}
+
+@mixin merge-red($new-map) {
+  @include merge-palette("red",$new-map);
+}
+
+@mixin merge-pink($new-map) {
+  @include merge-palette("pink",$new-map);
+}
+
+@mixin merge-purple($new-map) {
+  @include merge-palette("purple",$new-map);
+}
+
+@mixin merge-deep-purple($new-map) {
+  @include merge-palette("deep-purple",$new-map);
+}
+
+@mixin merge-blue($new-map) {
+  @include merge-palette("blue",$new-map);
+}
+
+@mixin merge-light-blue($new-map) {
+  @include merge-palette("light-blue",$new-map);
+}
+
+@mixin merge-indigo($new-map) {
+  @include merge-palette("indigo",$new-map);
+}
+
+@mixin merge-cyan($new-map) {
+  @include merge-palette("cyan",$new-map);
+}
+
+@mixin merge-teal($new-map) {
+  @include merge-palette("teal",$new-map);
+}
+
+@mixin merge-green($new-map) {
+  @include merge-palette("green",$new-map);
+}
+
+@mixin merge-light-green($new-map) {
+  @include merge-palette("light-green",$new-map);
+}
+
+@mixin merge-lime($new-map) {
+  @include merge-palette("lime",$new-map);
+}
+
+@mixin merge-yellow($new-map) {
+  @include merge-palette("yellow",$new-map);
+}
+
+@mixin merge-amber($new-map) {
+  @include merge-palette("amber",$new-map);
+}
+
+@mixin merge-orange($new-map) {
+  @include merge-palette("orange",$new-map);
+}
+
+@mixin merge-deep-orange($new-map) {
+  @include merge-palette("deep-orange",$new-map);
+}
+
+@mixin merge-brown($new-map) {
+  @include merge-palette("brown",$new-map);
+}
+
+// endregion ///////////////////////////////////////////// End Convenience Setters
+
+// region //////////////////////////////////////////////// Convenience Getter Functions
+
+@function get-gray($weight: 0) {
+  @return get-color("gray", $weight);
+}
+
+@function get-blue-gray($weight: 0) {
+  @return get-color("blue-gray", $weight);
+}
+
+@function get-red($weight: 0) {
+  @return get-color("red", $weight);
+}
+
+@function get-pink($weight: 0) {
+  @return get-color("pink", $weight);
+}
+
+@function get-purple($weight: 0) {
+  @return get-color("purple", $weight);
+}
+
+@function get-deep-purple($weight: 0) {
+  @return get-color("deep-purple", $weight);
+}
+
+@function get-indigo($weight: 0) {
+  @return get-color("indigo", $weight);
+}
+
+@function get-blue($weight: 0) {
+  @return get-color("blue", $weight);
+}
+
+@function get-light-blue($weight: 0) {
+  @return get-color("light-blue", $weight);
+}
+
+@function get-cyan($weight: 0) {
+  @return get-color("cyan", $weight);
+}
+
+@function get-teal($weight: 0) {
+  @return get-color("teal", $weight);
+}
+
+@function get-green($weight: 0) {
+  @return get-color("green", $weight);
+}
+
+@function get-light-green($weight: 0) {
+  @return get-color("light-green", $weight);
+}
+
+@function get-lime($weight: 0) {
+  @return get-color("lime", $weight);
+}
+
+@function get-yellow($weight: 0) {
+  @return get-color("yellow", $weight);
+}
+
+@function get-amber($weight: 0) {
+  @return get-color("amber", $weight);
+}
+
+@function get-orange($weight: 0) {
+  @return get-color("orange", $weight);
+}
+
+@function get-deep-orange($weight: 0) {
+  @return get-color("deep-orange", $weight);
+}
+
+@function get-brown($weight: 0) {
+  @return get-color("brown", $weight);
+}
+
+@function get-primary($weight: 0) {
+  @return get-color("primary", $weight);
+}
+
+@function get-secondary($weight: 0) {
+  @return get-color("secondary", $weight);
+}
+
+@function get-info($weight: 0) {
+  @return get-color("info", $weight);
+}
+
+@function get-success($weight: 0) {
+  @return get-color("success", $weight);
+}
+
+@function get-warning($weight: 0) {
+  @return get-color("warning", $weight);
+}
+
+@function get-danger($weight: 0) {
+  @return get-color("danger", $weight);
+}
+
+@function get-default($weight: 0) {
+  @return get-color("default", $weight);
+}
+
+// endregion ///////////////////////////////////////////// End Convenience Getter Functions
+
+// region //////////////////////////////////////////////// Backwards Compatible Functions
+
+// Function intended to provide compatibility with the deviscoding/colors function of the same name.
+//
+// @return {Color}
+@function component-background($color-name: "primary") {
+
+  $p-key: get-palette-key($color-name);
+  $default-weight: get-default-weight($p-key);
+
+  @return get-background($color-name, $default-color-weight);
+}
+
+// Function intended to provide compatibility with the deviscoding/colors function of the same name.
+//
+// @return {Color}
+@function component-border($color-name: "primary") {
+  $color-base: #fff;
+
+  @return mix(get-color($color-name), $color-base, 12%);
+}
+
+// Function intended to provide compatibility with the deviscoding/colors function of the same name.
+//
+// @return {Color}
+@function component-color($color-name: "primary") {
+
+  $p-key: get-palette-key($color-name);
+  $weight: get-default-weight($p-key);
+
+  @return get-color($color-name, $weight);
+}
+
+// Function intended to provide compatibility with the deviscoding/colors function of the same name.
+//
+// @return {Bool}
+@function isLight($color, $threshold: 150) {
+  @if quote($color) == "transparent" {
+    @return true;
+  } @else {
+    $red: red($color);
+    $green: green($color);
+    $blue: blue($color);
+    $yiq: (($red*299)+($green*587)+($blue*114))/1000;
+
+    @return if($yiq >= $threshold, true, false);
+  }
+}
+
+// endregion ///////////////////////////////////////////// End Backwards Compatible Functions

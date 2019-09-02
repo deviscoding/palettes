@@ -1,0 +1,19 @@
+{
+  "name": "deviscoding/css-palettes",
+  "description": "Color and shade utilities for SCSS inspired by Material Design, but not specific to it.",
+  "keywords": [
+    "color",
+    "palettes",
+    "swatch",
+    "material design"
+  ],
+  "homepage": "https://github.com/deviscoding/palettes",
+  "version": "1.0.0",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "AMJones",
+      "homepage": "http://www.deviscoding.com"
+    }
+  ]
+}

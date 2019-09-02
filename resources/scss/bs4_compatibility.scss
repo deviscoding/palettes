@@ -1,0 +1,77 @@
+@import "palette-variables";
+@import "palette-functions";
+
+
+$white:    #fff !default;
+$gray-100: get-gray(100) !default;
+$gray-200: get-gray(200) !default;
+$gray-300: get-gray(300) !default;
+$gray-400: get-gray(400) !default;
+$gray-500: get-gray(500) !default;
+$gray-600: get-gray(600) !default;
+$gray-700: get-gray(600) !default;
+$gray-800: get-gray(700) !default;
+$gray-900: get-gray(800) !default;
+$black:    #000 !default;
+
+$grays: () !default;
+$grays: map-merge((
+    "100": get-gray(100),
+    "200": get-gray(200),
+    "300": get-gray(300),
+    "400": get-gray(400),
+    "500": get-gray(500),
+    "600": get-gray(600),
+    "700": get-gray(700),
+    "800": get-gray(800),
+    "900": get-gray(900)
+), $grays);
+
+$blue:    get-light-blue(700) !default;
+$indigo:  get-deep-purple(600) !default;
+$purple:  get-deep-purple(400) !default;
+$pink:    get-pink(500) !default;
+$red:     get-red(700) !default;
+$orange:  get-orange(700) !default;
+$yellow:  get-yellow(500) !default;
+$green:   get-green(700) !default;
+$teal:    get-teal(400) !default;
+$cyan:    get-cyan(700) !default;
+
+$colors: () !default;
+$colors: map-merge((
+    "blue":       get-light-blue(700),
+    "indigo":     get-deep-purple(600),
+    "purple":     get-deep-purple(400),
+    "pink":       get-pink(500),
+    "red":        get-red(700),
+    "orange":     get-orange(700),
+    "yellow":     get-yellow(500),
+    "green":      get-green(700),
+    "teal":       get-teal(400),
+    "cyan":       get-cyan(700),
+    "white":      $white,
+    "gray":       get-gray(600),
+    "gray-dark":  get-gray(800)
+), $colors);
+
+$primary:       get-primary($default-color-weight) !default;
+$secondary:     get-gray(600) !default;
+$success:       get-success($default-color-weight) !default;
+$info:          get-info($default-color-weight) !default;
+$warning:       get-warning($default-color-weight) !default;
+$danger:        get-danger($default-color-weight) !default;
+$light:         get-gray(100) !default;
+$dark:          get-gray(800) !default;
+
+$theme-colors: () !default;
+$theme-colors: map-merge((
+    "primary":    $primary,
+    "secondary":  $secondary,
+    "success":    $success,
+    "info":       $info,
+    "warning":    $warning,
+    "danger":     $danger,
+    "light":      $light,
+    "dark":       $dark
+), $theme-colors);
